@@ -1,0 +1,142 @@
+Parameters:
+  VPCCidr:
+    Description: VPC Cidr block
+    Type: String
+  StackName:
+    Description: stack name
+    Type: String
+  PublicSubnetCidr:
+    Description: public subnet cidr
+    Type: String
+  PrivateSubnetCidr:
+    Description: private subnet cidr
+    Type: String
+
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VPCCidr
+      EnableDnsSupport: true
+      Tags:
+        - Key: stack
+          Value: !Ref StackName
+  VPCInternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: stack
+          Value: !Ref StackName
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref VPCInternetGateway
+
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: us-east-1a
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PublicSubnetCidr
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: stack
+          Value: !Ref StackName
+        - Key: isPublic
+          Value: true
+  PrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: us-east-1a
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PrivateSubnetCidr
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: stack
+          Value: !Ref StackName
+        - Key: isPublic
+          Value: false
+
+  PublicEIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: stack
+          Value: !Ref StackName
+  NATGateway:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt PublicEIP.AllocationId
+      SubnetId: !Ref PublicSubnet
+      Tags:
+        - Key: stack
+          Value: !Ref StackName
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: stack
+          Value: !Ref StackName
+  PublicRouteRule:
+    Type: AWS::EC2::Route
+    DependsOn: VPCInternetGateway
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref VPCInternetGateway
+  PublicRouteAssoc:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet
+      RouteTableId: !Ref PublicRouteTable
+
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: stack
+          Value: !Ref StackName
+  PrivateRouteRule:
+    Type: AWS::EC2::Route
+    DependsOn: NATGateway
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NATGateway
+  PrivateRouteAssoc:
+    DependsOn: PrivateRouteRule
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet
+      RouteTableId: !Ref PrivateRouteTable
+Outputs:
+  PVC:
+    Description: Output from PVC id
+    Value: !Ref VPC
+    Export:
+      Name: !Sub ${StackName}-VPCId
+  PublicSubnet:
+    Description: Output from Public subnet
+    Value: !Ref PublicSubnet
+    Export:
+      Name: !Sub ${StackName}-PublicSubnetId
+  PrivateSubnet:
+    Description: Output from Private subnet
+    Value: !Ref PrivateSubnet
+    Export:
+      Name: !Sub ${StackName}-PrivateSubnetId
+  IGWRouteTable:
+    Description: Internet gateway route table
+    Value: !Ref PublicRouteTable
+    Export:
+      Name: !Sub ${StackName}-PublicRouteTableId
+  NATRouteTable:
+    Description: NAT gateway route table
+    Value: !Ref PrivateRouteTable
+    Export:
+      Name: !Sub ${StackName}-PrivateRouteTableId

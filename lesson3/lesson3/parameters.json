@@ -1,0 +1,26 @@
+[
+  {
+    "ParameterKey": "VPCCidr",
+    "ParameterValue": "177.0.0.0/16"
+  },
+  {
+    "ParameterKey": "EnvName",
+    "ParameterValue": "development-uacity"
+  },
+  {
+    "ParameterKey": "PublicSubnetCidr1",
+    "ParameterValue": "177.0.128.0/20"
+  },
+  {
+    "ParameterKey": "PublicSubnetCidr2",
+    "ParameterValue": "177.0.80.0/20"
+  },
+  {
+    "ParameterKey": "PrivateSubnetCidr1",
+    "ParameterValue": "177.0.112.0/20"
+  },
+  {
+    "ParameterKey": "PrivateSubnetCidr2",
+    "ParameterValue": "177.0.96.0/20"
+  }
+]

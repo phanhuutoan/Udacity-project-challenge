@@ -1,0 +1,116 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: This is my fucking cloud formation stack
+Parameters:
+  VPCCidr:
+    Description: PVC Cidr
+    Type: String
+  EnvName:
+    Description: Environment name
+    Type: String
+  PrivateSubnetCidr1:
+    Description: Private subnet cidr 01
+    Type: String
+  PrivateSubnetCidr2:
+    Description: Private subnet cidr 02
+    Type: String
+  PublicSubnetCidr1:
+    Description: Public subnet cidr 01
+    Type: String
+  PublicSubnetCidr2:
+    Description: Public subnet cidr 01
+    Type: String
+
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VPCCidr
+      EnableDnsHostnames: "true"
+      Tags:
+        - Key: env
+          Value: !Ref EnvName
+  UdaInternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: env
+          Value: !Ref EnvName
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref UdaInternetGateway
+
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PublicSubnetCidr1
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: env
+          Value: !Ref EnvName
+        - Key: isPrivate
+          Value: false
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PublicSubnetCidr2
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: env
+          Value: !Ref EnvName
+        - Key: isPrivate
+          Value: false
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PrivateSubnetCidr1
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: env
+          Value: !Ref EnvName
+        - Key: isPrivate
+          Value: true
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PrivateSubnetCidr2
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: env
+          Value: !Ref EnvName
+        - Key: isPrivate
+          Value: true
+
+  NATGatewayEIP1:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+  NATGateway1:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NATGatewayEIP1.AllocationId
+      SubnetId: !Ref PublicSubnet1
+      Tags:
+        - Key: name
+          Value: NATGateway1
+  NATGatewayEIP2:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+  NATGateway2:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NATGatewayEIP2.AllocationId
+      SubnetId: !Ref PublicSubnet2
+      Tags:
+        - Key: env
+          Value: NATGateway2

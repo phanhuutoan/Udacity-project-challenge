@@ -1,0 +1,18 @@
+[
+  {
+    "ParameterKey": "VPCCidr",
+    "ParameterValue": "100.0.0.0/16"
+  },
+  {
+    "ParameterKey": "StackName",
+    "ParameterValue": "Udacity-challenge"
+  },
+  {
+    "ParameterKey": "PublicSubnetCidr",
+    "ParameterValue": "100.0.1.0/24"
+  },
+  {
+    "ParameterKey": "PrivateSubnetCidr",
+    "ParameterValue": "100.0.2.0/24"
+  }
+]
